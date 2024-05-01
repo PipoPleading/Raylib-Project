@@ -5,6 +5,7 @@
 
 #include <stdlib.h>
 #include <assert.h>
+#include <world.c>
 
 #define MAX_BODIES 100000
 
@@ -14,13 +15,24 @@ int main(void)
 	InitWindow(800, 450, "Physics Engine");
 	SetTargetFPS(60);
 
-	//cating as it returns a void/base pointer
-	Body* bodies = (Body*)malloc(sizeof(Body) * MAX_BODIES);
-	//true if bodies exists, if not false
-	assert(bodies);
+	////cating as it returns a void/base pointer
+	//Body* bodies = (Body*)malloc(sizeof(Body) * MAX_BODIES);
+	////true if bodies exists, if not false
+	//assert(bodies);
 
 	int bodyCount = 0;
 
+	// update / draw bodies
+	Body* body = bodies;
+	while (body) // do while we have a valid pointer, will be NULL at the end of the list
+	{
+		// update body position
+		Vector2 position = GetMousePosition();
+		bodies->position = position;
+		// draw body
+		bodies[bodyCount].position = position;
+		body = body->next; // get next body
+	}
 	// game loop
 	while (!WindowShouldClose())
 	{
