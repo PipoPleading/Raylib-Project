@@ -1,30 +1,34 @@
 #include "world.h"
-#include "malloc.h"
+#include "body.h"
+
+#include <stdlib.h>
 #include <assert.h>
+#include <string.h>
 
 //assigning NULL
-Body* bodies = 0;
-int bodyCount = 0;
+pbBody* pbBodies = 0;
+int pbBodyCount = 0;
+Vector2 pbGravity;
 
-Body* CreateBody()
+pbBody* CreateBody()
 {
-	//Allocate memory for new Body
-	Body* body = (Body*)malloc(sizeof(Body));
-	//Check if allocation is successful
+	pbBody* body = (pbBody*)malloc(sizeof(pbBody));
+
 	assert(body);
-	//Initialize 'prev' to NULL and 'next' to the head of the list
+	memset(body, 0, sizeof(pbBody));
+
 	body->prev = NULL;
-	body->next = bodies;
-	//If list is not empty, update 'prev' of existing head
-	if(bodies) bodies->prev = body;
-	//Update head of the list to new Body
-	bodies = body;
-	//Increment body count
-	bodyCount++;
-	//Return new Body
+	body->next = pbBodies;
+
+	if(pbBodies) pbBodies->prev = body;
+
+	pbBodies = body;
+
+	pbBodyCount++;
+
 	return body;
 }
-void DestroyBody(Body* body)
+void DestroyBody(pbBody* body)
 {
 	//Assert if provided Body is not NULL
 	assert(body);
@@ -33,9 +37,9 @@ void DestroyBody(Body* body)
 	//	If 'next' is not NULL, set 'next->prev' to 'body->prev'
 	if (body->next) body->next->prev = body->prev;
 	//	If body is the head, update head to 'body->next'
-	if (bodies == body) bodies = body->next;
+	if (pbBodies == body) pbBodies = body->next;
 	//	Decrement body count
-	bodyCount--;
+	pbBodyCount--;
 	//	Free the body
 	free(body);
 }

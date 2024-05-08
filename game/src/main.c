@@ -1,7 +1,13 @@
-#include"body.h"
+#include "body.h"
+#include "mathf.h"
+#include "integrator.h"
+#include "world.h"
+#include "force.h"
+#include "render.h"
+#include "editor.h"
+
 #include "raylib.h"
 #include "raymath.h"
-#include "mathf.h"
 
 #include <stdlib.h>
 #include <assert.h>
@@ -15,24 +21,9 @@ int main(void)
 	InitWindow(800, 450, "Physics Engine");
 	SetTargetFPS(60);
 
-	////cating as it returns a void/base pointer
-	//Body* bodies = (Body*)malloc(sizeof(Body) * MAX_BODIES);
-	////true if bodies exists, if not false
-	//assert(bodies);
+    //initialize world
+    pbGravity = (Vector2){ 0, -1 };
 
-	int bodyCount = 0;
-
-	// update / draw bodies
-	Body* body = bodies;
-	while (body) // do while we have a valid pointer, will be NULL at the end of the list
-	{
-		// update body position
-		Vector2 position = GetMousePosition();
-		bodies->position = position;
-		// draw body
-		bodies[bodyCount].position = position;
-		body = body->next; // get next body
-	}
 	// game loop
 	while (!WindowShouldClose())
 	{
@@ -42,36 +33,64 @@ int main(void)
 		float fps = (float)GetFPS();
 
 		Vector2 position = GetMousePosition();
+        pbScreenZoom += GetMouseWheelMove() * 0.2f;
+        pbScreenZoom = Clamp(pbScreenZoom, 0.1f, 10);
+        UpdateEditor(position);
+
+        //potential for loop
 		if (IsMouseButtonDown(0))
 		{
-			bodies[bodyCount].position = position;
-			bodies[bodyCount].velocity = CreateVector2(GetRandomFloatValue01(-5, 5), GetRandomFloatValue01(-5, 5));
-			bodyCount++;
+            //constructing bodies
+			pbBody* body = CreateBody();
+			body->position = ConvertScreenToWorld(position);
+            body->mass = GetRandomFloatValue01(0.1f, 1);
+            body->imass = 1 / body->mass;
+            body->type = BT_Dynamic;
+            body->damping = 0.5f; //0 is cool
+            body->gravityScale = 20;
+
+            //applying effects
+            //ApplyForce(body, (Vector2) { GetRandomFloatValue01(-100, 100), GetRandomFloatValue01(-100, 100) }, FM_Velocity);
 		}
+
+        //apply force
+        ApplyGravitation(pbBodies, 30);
+
+		//update bodies
+        for (pbBody* body = pbBodies; body; body = body->next)
+        {
+            Step(body, dt);
+
+        }
 
 		// render
 		BeginDrawing();
 		ClearBackground(BLACK);
 
+        DrawEditor();
+
 		//stats
 		DrawText(TextFormat("FPS: %.2f (%.2fms)", fps, 1000/fps),10, 10, 20, LIME );
 		DrawText(TextFormat("FRAME: %.4f", dt),10, 30, 20, LIME );
 
-		//minor cursor delay
-		for (int i = 0; i < bodyCount; i++)
-		{
-			bodies[i].position = Vector2Add(bodies[i].position, bodies[i].velocity);
-			DrawCircle((int)bodies[i].position.x, (int)bodies[i].position.y, 10, GREEN);
-		}
+        DrawCircle((int)position.x, (int)position.y, 5, SKYBLUE);
 
-		DrawCircle((int)position.x, (int)position.y, 10, SKYBLUE);
+		//minor cursor delay
+        for (pbBody* body = pbBodies; body; body = body->next)
+        {
+            Vector2 screen = ConvertWorldToScreen(body->position);
+            DrawCircle((int)screen.x, (int)screen.y, ConvertWorldToPixel(body->mass), GREEN);
+
+        }
+
+		//DrawCircle((int)position.x, (int)position.y, body->mass, SKYBLUE);
 
 		EndDrawing();
 	}
 
 	CloseWindow();
 
-	free(bodies);
+	free(pbBodies);
 
 	return 0;
 }
