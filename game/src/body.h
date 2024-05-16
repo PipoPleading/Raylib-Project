@@ -33,6 +33,8 @@ typedef struct pbBody
     float gravityScale;
     float damping;
 
+    float restitution;
+
 	struct pbBody* next;
 	struct pbBody* prev;
 

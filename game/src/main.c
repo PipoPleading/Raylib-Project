@@ -5,20 +5,23 @@
 #include "force.h"
 #include "render.h"
 #include "editor.h"
+#include "spring.h"
 
 #include "raylib.h"
 #include "raymath.h"
 
 #include <stdlib.h>
 #include <assert.h>
-#include <world.c>
 
 #define MAX_BODIES 100000
 
 int main(void)
 {
+    pbBody* selectedBody = NULL;
+    pbBody* connectBody = NULL;
+
 	//resolution
-	InitWindow(800, 450, "Physics Engine");
+	InitWindow(1280, 720, "Physics Engine");
 	SetTargetFPS(60);
 
     //initialize world
@@ -37,24 +40,39 @@ int main(void)
         pbScreenZoom = Clamp(pbScreenZoom, 0.1f, 10);
         UpdateEditor(position);
 
-        //potential for loop
-		if (IsMouseButtonDown(0))
+        selectedBody = GetBodyIntersect(pbBodies, position);
+        if (selectedBody) {
+            Vector2 screen = ConvertWorldToScreen(selectedBody->position);
+            DrawCircleLines((int)screen.x, (int)screen.y, ConvertWorldToPixel(selectedBody->mass) + 5, YELLOW);
+        }
+
+        //create body
+		if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
 		{
             //constructing bodies
-			pbBody* body = CreateBody();
-			body->position = ConvertScreenToWorld(position);
-            body->mass = GetRandomFloatValue01(0.1f, 1);
-            body->imass = 1 / body->mass;
-            body->type = BT_Dynamic;
-            body->damping = 0.5f; //0 is cool
-            body->gravityScale = 20;
+			pbBody* body = CreateBody(ConvertScreenToWorld(position), pbEditorData.MassMinValue, pbEditorData.BodyTypeActive);
 
+            body->damping = pbEditorData.DampingValue; //0 is cool
+            body->gravityScale = pbEditorData.GravitationValue;
+
+
+            AddBody(body);
             //applying effects
             //ApplyForce(body, (Vector2) { GetRandomFloatValue01(-100, 100), GetRandomFloatValue01(-100, 100) }, FM_Velocity);
 		}
 
+        if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT) && selectedBody) connectBody = selectedBody;
+        if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT) && connectBody) DrawLineBodyToPosition(connectBody, position);
+        if (IsMouseButtonReleased(MOUSE_BUTTON_RIGHT) && connectBody) {
+            if (selectedBody && selectedBody != connectBody) {
+                pbSpring_t* spring = CreateSpring(connectBody, selectedBody, Vector2Distance(connectBody->position, selectedBody->position), 20);
+                AddSpring(spring);
+            }
+        }
+
         //apply force
-        ApplyGravitation(pbBodies, 30);
+        ApplyGravitation(pbBodies, pbEditorData.GravitationValue);
+        ApplySpringForce(pbSprings);
 
 		//update bodies
         for (pbBody* body = pbBodies; body; body = body->next)
@@ -67,15 +85,12 @@ int main(void)
 		BeginDrawing();
 		ClearBackground(BLACK);
 
-        DrawEditor();
 
 		//stats
 		DrawText(TextFormat("FPS: %.2f (%.2fms)", fps, 1000/fps),10, 10, 20, LIME );
 		DrawText(TextFormat("FRAME: %.4f", dt),10, 30, 20, LIME );
 
-        DrawCircle((int)position.x, (int)position.y, 5, SKYBLUE);
 
-		//minor cursor delay
         for (pbBody* body = pbBodies; body; body = body->next)
         {
             Vector2 screen = ConvertWorldToScreen(body->position);
@@ -83,7 +98,16 @@ int main(void)
 
         }
 
-		//DrawCircle((int)position.x, (int)position.y, body->mass, SKYBLUE);
+        for (pbSpring_t* spring = pbSprings; spring; spring = spring->next)
+        {
+            Vector2 screen1 = ConvertWorldToScreen(spring->body1->position);
+            Vector2 screen2 = ConvertWorldToScreen(spring->body2->position);
+            DrawLine((int)screen1.x, (int)screen1.y, (int)screen2.x, (int)screen2.y, PURPLE);
+
+        }
+
+        //new mouse draw
+        DrawEditor(position);
 
 		EndDrawing();
 	}

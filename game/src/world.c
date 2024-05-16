@@ -10,24 +10,37 @@ pbBody* pbBodies = 0;
 int pbBodyCount = 0;
 Vector2 pbGravity;
 
-pbBody* CreateBody()
+pbBody* CreateBody(Vector2 position, float mass, pbBodyType bodyType)
 {
 	pbBody* body = (pbBody*)malloc(sizeof(pbBody));
 
 	assert(body);
 	memset(body, 0, sizeof(pbBody));
+    body->position = position;
+    body->mass = mass;
+    body->imass = (bodyType == BT_Dynamic) ? 1 / mass : 0;
+    body->type = bodyType;
 
-	body->prev = NULL;
-	body->next = pbBodies;
-
-	if(pbBodies) pbBodies->prev = body;
-
-	pbBodies = body;
-
-	pbBodyCount++;
 
 	return body;
 }
+
+void AddBody(pbBody* body)
+{
+    assert(body);
+
+    //add element to linked list
+    body->prev = NULL;
+    body->next = pbBodies;
+
+    if (pbBodies) pbBodies->prev = body;
+
+    //set head of bodies to new element
+    pbBodies = body;
+
+    pbBodyCount++;
+}
+
 void DestroyBody(pbBody* body)
 {
 	//Assert if provided Body is not NULL

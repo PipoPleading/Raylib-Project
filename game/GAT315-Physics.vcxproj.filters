@@ -27,6 +27,12 @@
     <ClCompile Include="src\render.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\spring.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\editorr.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\body.h">
@@ -48,6 +54,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\render.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\spring.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\editorr.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
